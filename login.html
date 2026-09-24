@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>NovaWeb — Login</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="navbar">
+
+    <div class="logo">
+        Nova<span>Web</span>
+    </div>
+
+    <a href="index.html">← Back to website</a>
+
+</header>
+
+
+<main class="login-page">
+
+    <div class="login-card">
+
+        <h1>Welcome to NovaWeb</h1>
+
+        <p class="login-subtitle">
+            Choose your account type
+        </p>
+
+
+        <!-- ACCOUNT TYPE -->
+
+        <div class="account-choice">
+
+            <button
+                type="button"
+                id="clientChoice"
+                class="account-button active"
+            >
+                <span>👤</span>
+
+                <strong>Client</strong>
+
+                <small>
+                    View your projects
+                </small>
+            </button>
+
+
+            <button
+                type="button"
+                id="adminChoice"
+                class="account-button"
+            >
+                <span>🛡️</span>
+
+                <strong>Admin</strong>
+
+                <small>
+                    Staff dashboard
+                </small>
+            </button>
+
+        </div>
+
+
+        <div
+            id="selectedMessage"
+            class="selected-message"
+        >
+            Client login selected
+        </div>
+
+
+        <!-- SIGNUP NAME -->
+
+        <div
+            id="signupFields"
+            style="display:none;"
+        >
+
+            <label for="name">
+                Full Name
+            </label>
+
+            <input
+                type="text"
+                id="name"
+                placeholder="Your name"
+            >
+
+        </div>
+
+
+        <!-- EMAIL -->
+
+        <label for="email">
+            Email
+        </label>
+
+        <input
+            type="email"
+            id="email"
+            placeholder="you@example.com"
+        >
+
+
+        <!-- PASSWORD -->
+
+        <label for="password">
+            Password
+        </label>
+
+        <input
+            type="password"
+            id="password"
+            placeholder="Your password"
+        >
+
+
+        <!-- LOGIN BUTTON -->
+
+        <button
+            type="button"
+            id="mainButton"
+            class="login-button"
+        >
+            Client Login
+        </button>
+
+
+        <!-- SIGNUP SWITCH -->
+
+        <p id="switchText">
+
+            Don't have a client account?
+
+            <button
+                type="button"
+                id="switchMode"
+                class="text-button"
+            >
+                Create one
+            </button>
+
+        </p>
+
+
+        <!-- MESSAGE -->
+
+        <div
+            id="message"
+            class="login-message"
+        ></div>
+
+    </div>
+
+</main>
+
+
+<!-- SUPABASE -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="supabase-config.js"></script>
+
+
+<script>
+
+let selectedType = "client";
+let signupMode = false;
+
+
+// ============================
+// ELEMENTS
+// ============================
+
+const clientChoice =
+    document.getElementById("clientChoice");
+
+const adminChoice =
+    document.getElementById("adminChoice");
+
+const selectedMessage =
+    document.getElementById("selectedMessage");
+
+const signupFields =
+    document.getElementById("signupFields");
+
+const mainButton =
+    document.getElementById("mainButton");
+
+const switchText =
+    document.getElementById("switchText");
+
+const message =
+    document.getElementById("message");
+
+
+// ============================
+// MESSAGE
+// ============================
+
+function showMessage(text, error = true) {
+
+    message.textContent = text;
+
+    message.style.color =
+        error ? "#f87171" : "#4ade80";
+
+}
+
+
+// ============================
+// CLIENT SELECT
+// ============================
+
+clientChoice.addEventListener("click", () => {
+
+    selectedType = "client";
+
+    clientChoice.classList.add("active");
+
+    adminChoice.classList.remove("active");
+
+    selectedMessage.textContent =
+        "Client login selected";
+
+
+    if (signupMode) {
+
+        mainButton.textContent =
+            "Create Client Account";
+
+    } else {
+
+        mainButton.textContent =
+            "Client Login";
+
+    }
+
+
+    switchText.style.display = "block";
+
+    showMessage("");
+
+});
+
+
+// ============================
+// ADMIN SELECT
+// ============================
+
+adminChoice.addEventListener("click", () => {
+
+    selectedType = "admin";
+
+    adminChoice.classList.add("active");
+
+    clientChoice.classList.remove("active");
+
+    selectedMessage.textContent =
+        "Admin login selected";
+
+
+    // Admin cannot create accounts
+    signupMode = false;
+
+    signupFields.style.display = "none";
+
+    mainButton.textContent =
+        "Admin Login";
+
+    switchText.style.display = "none";
+
+    showMessage("");
+
+});
+
+
+// ============================
+// SIGNUP / LOGIN SWITCH
+// ============================
+
+switchText.addEventListener("click", (event) => {
+
+    if (!event.target.matches("#switchMode")) {
+        return;
+    }
+
+
+    signupMode = !signupMode;
+
+
+    if (signupMode) {
+
+        signupFields.style.display =
+            "block";
+
+        mainButton.textContent =
+            "Create Client Account";
+
+
+        switchText.innerHTML =
+            `
+            Already have a client account?
+
+            <button
+                type="button"
+                id="switchMode"
+                class="text-button"
+            >
+                Login
+            </button>
+            `;
+
+    } else {
+
+        signupFields.style.display =
+            "none";
+
+        mainButton.textContent =
+            "Client Login";
+
+
+        switchText.innerHTML =
+            `
+            Don't have a client account?
+
+            <button
+                type="button"
+                id="switchMode"
+                class="text-button"
+            >
+                Create one
+            </button>
+            `;
+
+    }
+
+});
+
+
+// ============================
+// MAIN BUTTON
+// ============================
+
+mainButton.addEventListener("click", async () => {
+
+    showMessage("");
+
+    const email =
+        document.getElementById("email")
+        .value
+        .trim();
+
+    const password =
+        document.getElementById("password")
+        .value;
+
+
+    if (!email || !password) {
+
+        showMessage(
+            "Please enter your email and password."
+        );
+
+        return;
+
+    }
+
+
+    mainButton.disabled = true;
+
+    mainButton.textContent =
+        "Please wait...";
+
+
+    try {
+
+
+        // ========================
+        // CLIENT SIGNUP
+        // ========================
+
+        if (
+            selectedType === "client" &&
+            signupMode
+        ) {
+
+            const name =
+                document.getElementById("name")
+                .value
+                .trim();
+
+
+            if (!name) {
+
+                throw new Error(
+                    "Please enter your name."
+                );
+
+            }
+
+
+            const { data, error } =
+                await supabaseClient.auth.signUp({
+
+                    email: email,
+
+                    password: password,
+
+                    options: {
+
+                        data: {
+                            full_name: name
+                        }
+
+                    }
+
+                });
+
+
+            if (error) {
+                throw error;
+            }
+
+
+            // If email confirmation is disabled,
+            // Supabase will provide a session.
+
+            if (!data.session) {
+
+                showMessage(
+                    "Account created, but Supabase has not signed you in yet. Check your Supabase email settings.",
+                    true
+                );
+
+                mainButton.disabled = false;
+
+                mainButton.textContent =
+                    "Create Client Account";
+
+                return;
+
+            }
+
+
+            // Create/update customer profile
+
+            const { error: profileError } =
+                await supabaseClient
+                .from("profiles")
+                .upsert({
+
+                    id: data.user.id,
+
+                    email: email,
+
+                    full_name: name,
+
+                    role: "customer"
+
+                });
+
+
+            if (profileError) {
+
+                throw profileError;
+
+            }
+
+
+            window.location.href =
+                "dashboard.html";
+
+            return;
+
+        }
+
+
+        // ========================
+        // NORMAL LOGIN
+        // ========================
+
+        const { data, error } =
+            await supabaseClient.auth
+            .signInWithPassword({
+
+                email: email,
+
+                password: password
+
+            });
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        // ========================
+        // ADMIN LOGIN
+        // ========================
+
+        if (selectedType === "admin") {
+
+            /*
+             * IMPORTANT:
+             *
+             * The same email and password can now
+             * be used for Admin AND Client.
+             *
+             * We still check that the account has
+             * staff permissions before opening
+             * the admin dashboard.
+             */
+
+            const { data: profile, error: profileError } =
+                await supabaseClient
+                .from("profiles")
+                .select("role")
+                .eq("id", data.user.id)
+                .maybeSingle();
+
+
+            if (profileError) {
+                throw profileError;
+            }
+
+
+            if (!profile) {
+
+                await supabaseClient.auth.signOut();
+
+                throw new Error(
+                    "Your account does not have a NovaWeb profile."
+                );
+
+            }
+
+
+            if (profile.role !== "staff") {
+
+                await supabaseClient.auth.signOut();
+
+                throw new Error(
+                    "This account does not have admin permissions."
+                );
+
+            }
+
+
+            window.location.href =
+                "admin.html";
+
+            return;
+
+        }
+
+
+        // ========================
+        // CLIENT LOGIN
+        // ========================
+
+        /*
+         * IMPORTANT:
+         *
+         * We no longer require the profile to have
+         * role = customer.
+         *
+         * This means your staff/admin account can
+         * also access the client dashboard.
+         */
+
+        window.location.href =
+            "dashboard.html";
+
+
+    } catch (error) {
+
+        console.error(
+            "NovaWeb login error:",
+            error
+        );
+
+
+        showMessage(
+            error.message ||
+            "Login failed."
+        );
+
+
+        mainButton.disabled = false;
+
+
+        if (selectedType === "admin") {
+
+            mainButton.textContent =
+                "Admin Login";
+
+        } else if (signupMode) {
+
+            mainButton.textContent =
+                "Create Client Account";
+
+        } else {
+
+            mainButton.textContent =
+                "Client Login";
+
+        }
+
+    }
+
+});
+
+</script>
+
+</body>
+</html>
