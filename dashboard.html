@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>NovaWeb — Client Dashboard</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+</head>
+
+<body>
+
+<header class="navbar">
+    <div class="logo">Nova<span>Web</span></div>
+
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="index.html#request">Request Website</a>
+        <button id="logoutBtn" class="nav-button">Logout</button>
+    </nav>
+</header>
+
+
+<main class="dashboard-container">
+
+    <section class="dashboard-header">
+        <div>
+            <p class="eyebrow">CLIENT PORTAL</p>
+            <h1>Welcome back<span id="clientName"></span>.</h1>
+            <p>
+                Track your website project, view updates and monitor its progress.
+            </p>
+        </div>
+
+        <div class="dashboard-status">
+            <span class="status-dot"></span>
+            <span>Client Portal</span>
+        </div>
+    </section>
+
+
+    <section id="loading" class="dashboard-card">
+        <h2>Loading your projects...</h2>
+        <p>Please wait while we retrieve your project information.</p>
+    </section>
+
+
+    <section id="noProjects" class="dashboard-card hidden">
+        <div class="empty-icon">+</div>
+
+        <h2>No projects yet</h2>
+
+        <p>
+            You haven't submitted a website request yet.
+        </p>
+
+        <a href="index.html#request" class="primary-button">
+            Request a Website
+        </a>
+    </section>
+
+
+    <section id="projectsContainer"></section>
+
+</main>
+
+
+<footer class="footer">
+    <p>© 2026 NovaWeb. All rights reserved.</p>
+</footer>
+
+
+<script>
+
+const projectsContainer =
+    document.getElementById("projectsContainer");
+
+const loading =
+    document.getElementById("loading");
+
+const noProjects =
+    document.getElementById("noProjects");
+
+const clientName =
+    document.getElementById("clientName");
+
+const logoutBtn =
+    document.getElementById("logoutBtn");
+
+
+async function loadDashboard() {
+
+    try {
+
+        const {
+            data: sessionData,
+            error: sessionError
+        } = await supabaseClient.auth.getSession();
+
+        if (sessionError)
+            throw sessionError;
+
+        const session = sessionData.session;
+
+        if (!session) {
+            window.location.href = "login.html";
+            return;
+        }
+
+
+        const user = session.user;
+
+
+        const {
+            data: profile,
+            error: profileError
+        } = await supabaseClient
+            .from("profiles")
+            .select("*")
+            .eq("id", user.id)
+            .single();
+
+
+        if (profileError)
+            throw profileError;
+
+
+        if (profile.role !== "customer") {
+
+            if (profile.role === "staff") {
+                window.location.href = "admin.html";
+                return;
+            }
+
+            throw new Error("Your account is not a client account.");
+        }
+
+
+        clientName.textContent =
+            profile.full_name
+                ? " " + profile.full_name
+                : "";
+
+
+        const {
+            data: projects,
+            error: projectsError
+        } = await supabaseClient
+            .from("projects")
+            .select("*")
+            .eq("customer_id", user.id)
+            .order("created_at", {
+                ascending: false
+            });
+
+
+        if (projectsError)
+            throw projectsError;
+
+
+        loading.classList.add("hidden");
+
+
+        if (!projects || projects.length === 0) {
+
+            noProjects.classList.remove("hidden");
+
+            return;
+        }
+
+
+        projectsContainer.innerHTML = "";
+
+
+        for (const project of projects) {
+
+            await createProject(project);
+        }
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        loading.innerHTML = `
+            <h2>Something went wrong</h2>
+            <p>${escapeHTML(error.message)}</p>
+        `;
+    }
+}
+
+
+async function createProject(project) {
+
+    const card =
+        document.createElement("div");
+
+    card.className =
+        "dashboard-card project-card";
+
+
+    const progress =
+        project.progress || 0;
+
+
+    const status =
+        project.status || "Request Received";
+
+
+    const {
+        data: updates
+    } = await supabaseClient
+        .from("project_updates")
+        .select("*")
+        .eq("project_id", project.id)
+        .order("created_at", {
+            ascending: false
+        });
+
+
+    let updatesHTML = "";
+
+
+    if (updates && updates.length) {
+
+        updatesHTML = updates.map(update => `
+
+            <div class="project-update">
+
+                <div class="update-icon">✓</div>
+
+                <div>
+
+                    <strong>
+                        ${escapeHTML(update.title)}
+                    </strong>
+
+                    <p>
+                        ${escapeHTML(update.message)}
+                    </p>
+
+                    <small>
+                        ${new Date(update.created_at)
+                            .toLocaleString()}
+                    </small>
+
+                </div>
+
+            </div>
+
+        `).join("");
+
+    } else {
+
+        updatesHTML = `
+            <p class="muted">
+                No project updates yet.
+            </p>
+        `;
+    }
+
+
+    card.innerHTML = `
+
+        <div class="project-top">
+
+            <div>
+
+                <p class="eyebrow">
+                    PROJECT ${escapeHTML(project.project_code)}
+                </p>
+
+                <h2>
+                    ${escapeHTML(project.website_name)}
+                </h2>
+
+                <p class="muted">
+                    Submitted
+                    ${new Date(project.created_at)
+                        .toLocaleDateString()}
+                </p>
+
+            </div>
+
+            <span class="project-status">
+                ${escapeHTML(status)}
+            </span>
+
+        </div>
+
+
+        <div class="progress-section">
+
+            <div class="progress-heading">
+
+                <strong>Project Progress</strong>
+
+                <span>${progress}%</span>
+
+            </div>
+
+            <div class="progress-bar">
+
+                <div
+                    class="progress-fill"
+                    style="width:${progress}%"
+                ></div>
+
+            </div>
+
+        </div>
+
+
+        <div class="project-details">
+
+            <div>
+                <span>Website Type</span>
+                <strong>
+                    ${escapeHTML(project.website_type || "Not specified")}
+                </strong>
+            </div>
+
+            <div>
+                <span>Deadline</span>
+                <strong>
+                    ${project.deadline
+                        ? escapeHTML(project.deadline)
+                        : "Not specified"}
+                </strong>
+            </div>
+
+            <div>
+                <span>Project Code</span>
+                <strong>
+                    ${escapeHTML(project.project_code)}
+                </strong>
+            </div>
+
+            <div>
+                <span>Preview</span>
+                <strong>
+                    ${
+                        project.preview_url
+                        ? `<a href="${escapeAttribute(project.preview_url)}"
+                             target="_blank">
+                             View Website
+                           </a>`
+                        : "Not available yet"
+                    }
+                </strong>
+            </div>
+
+        </div>
+
+
+        <div class="timeline">
+
+            ${createTimeline(status)}
+
+        </div>
+
+
+        <div class="updates-section">
+
+            <h3>Project Updates</h3>
+
+            <div class="updates-list">
+
+                ${updatesHTML}
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    projectsContainer.appendChild(card);
+}
+
+
+function createTimeline(currentStatus) {
+
+    const statuses = [
+
+        "Request Received",
+        "Designing",
+        "Development",
+        "Customer Review",
+        "Completed"
+
+    ];
+
+
+    const currentIndex =
+        statuses.indexOf(currentStatus);
+
+
+    return statuses.map((status, index) => {
+
+        let className = "";
+
+        if (index < currentIndex)
+            className = "completed";
+
+        if (index === currentIndex)
+            className = "active";
+
+
+        return `
+
+            <div class="timeline-item ${className}">
+
+                <div class="timeline-circle">
+
+                    ${
+                        index < currentIndex
+                        ? "✓"
+                        : index + 1
+                    }
+
+                </div>
+
+                <span>
+                    ${status}
+                </span>
+
+            </div>
+
+        `;
+
+    }).join("");
+}
+
+
+function escapeHTML(value) {
+
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+function escapeAttribute(value) {
+
+    return escapeHTML(value);
+}
+
+
+logoutBtn.addEventListener("click", async () => {
+
+    await supabaseClient.auth.signOut();
+
+    window.location.href = "login.html";
+
+});
+
+
+loadDashboard();
+
+</script>
+
+</body>
+</html>

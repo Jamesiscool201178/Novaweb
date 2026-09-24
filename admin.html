@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>NovaWeb — Admin</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+</head>
+
+<body>
+
+<header class="navbar">
+
+    <div class="logo">
+        Nova<span>Web</span>
+    </div>
+
+    <nav>
+        <a href="index.html">Website</a>
+        <a href="dashboard.html">Client Portal</a>
+        <button id="logoutBtn" class="nav-button">Logout</button>
+    </nav>
+
+</header>
+
+
+<main class="admin-container">
+
+    <section class="admin-header">
+
+        <div>
+            <p class="eyebrow">STAFF PORTAL</p>
+
+            <h1>Project Management</h1>
+
+            <p>
+                Manage customer requests, project progress and updates.
+            </p>
+        </div>
+
+        <button id="refreshBtn" class="admin-button">
+            ↻ Refresh
+        </button>
+
+    </section>
+
+
+    <section class="admin-controls">
+
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Search projects..."
+        >
+
+        <select id="statusFilter">
+
+            <option value="all">All statuses</option>
+            <option value="Request Received">Request Received</option>
+            <option value="Designing">Designing</option>
+            <option value="Development">Development</option>
+            <option value="Customer Review">Customer Review</option>
+            <option value="Completed">Completed</option>
+
+        </select>
+
+    </section>
+
+
+    <section id="loadingProjects" class="dashboard-card">
+
+        <h2>Loading projects...</h2>
+
+        <p>
+            Retrieving customer requests.
+        </p>
+
+    </section>
+
+
+    <section
+        id="projectsList"
+        class="admin-projects">
+    </section>
+
+
+</main>
+
+
+<footer class="footer">
+
+    <p>
+        © 2026 NovaWeb. Staff Portal.
+    </p>
+
+</footer>
+
+
+<script>
+
+let allProjects = [];
+
+
+const projectsList =
+    document.getElementById("projectsList");
+
+const loadingProjects =
+    document.getElementById("loadingProjects");
+
+const searchInput =
+    document.getElementById("searchInput");
+
+const statusFilter =
+    document.getElementById("statusFilter");
+
+const refreshBtn =
+    document.getElementById("refreshBtn");
+
+const logoutBtn =
+    document.getElementById("logoutBtn");
+
+
+async function checkStaff() {
+
+    const {
+        data: sessionData,
+        error: sessionError
+    } = await supabaseClient.auth.getSession();
+
+
+    if (sessionError)
+        throw sessionError;
+
+
+    if (!sessionData.session) {
+
+        window.location.href = "login.html";
+
+        return false;
+    }
+
+
+    const user =
+        sessionData.session.user;
+
+
+    const {
+        data: profile,
+        error
+    } = await supabaseClient
+        .from("profiles")
+        .select("role,full_name")
+        .eq("id", user.id)
+        .single();
+
+
+    if (error)
+        throw error;
+
+
+    if (profile.role !== "staff") {
+
+        alert("You do not have staff access.");
+
+        await supabaseClient.auth.signOut();
+
+        window.location.href = "login.html";
+
+        return false;
+    }
+
+
+    return true;
+}
+
+
+async function loadProjects() {
+
+    try {
+
+        loadingProjects.classList.remove("hidden");
+
+        projectsList.innerHTML = "";
+
+
+        const allowed =
+            await checkStaff();
+
+
+        if (!allowed)
+            return;
+
+
+        const {
+            data,
+            error
+        } = await supabaseClient
+            .from("projects")
+            .select(`
+                *,
+                profiles:customer_id (
+                    full_name,
+                    email
+                )
+            `)
+            .order("created_at", {
+                ascending: false
+            });
+
+
+        if (error)
+            throw error;
+
+
+        allProjects = data || [];
+
+
+        loadingProjects.classList.add("hidden");
+
+
+        renderProjects();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        loadingProjects.innerHTML = `
+            <h2>Could not load projects</h2>
+            <p>${escapeHTML(error.message)}</p>
+        `;
+
+    }
+
+}
+
+
+function renderProjects() {
+
+    const search =
+        searchInput.value
+            .toLowerCase()
+            .trim();
+
+
+    const filter =
+        statusFilter.value;
+
+
+    const projects =
+        allProjects.filter(project => {
+
+            const customerName =
+                project.profiles?.full_name || "";
+
+            const customerEmail =
+                project.profiles?.email || "";
+
+
+            const matchesSearch =
+                !search ||
+                project.project_code?.toLowerCase().includes(search) ||
+                project.website_name?.toLowerCase().includes(search) ||
+                customerName.toLowerCase().includes(search) ||
+                customerEmail.toLowerCase().includes(search);
+
+
+            const matchesStatus =
+                filter === "all" ||
+                project.status === filter;
+
+
+            return matchesSearch && matchesStatus;
+
+        });
+
+
+    if (!projects.length) {
+
+        projectsList.innerHTML = `
+
+            <div class="dashboard-card">
+
+                <h2>No projects found</h2>
+
+                <p>
+                    Try changing your search or status filter.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+    projectsList.innerHTML =
+        projects.map(createProjectCard).join("");
+
+
+    attachProjectEvents();
+}
+
+
+function createProjectCard(project) {
+
+    const customerName =
+        project.profiles?.full_name ||
+        "Unknown customer";
+
+
+    const customerEmail =
+        project.profiles?.email ||
+        project.email ||
+        "No email";
+
+
+    const progress =
+        project.progress || 0;
+
+
+    const claimed =
+        Boolean(project.claimed_by);
+
+
+    return `
+
+        <article
+            class="admin-project-card"
+            data-id="${project.id}"
+        >
+
+            <div class="admin-project-header">
+
+                <div>
+
+                    <p class="eyebrow">
+                        ${escapeHTML(project.project_code)}
+                    </p>
+
+                    <h2>
+                        ${escapeHTML(project.website_name)}
+                    </h2>
+
+                    <p class="customer-info">
+                        👤 ${escapeHTML(customerName)}
+                        ·
+                        ${escapeHTML(customerEmail)}
+                    </p>
+
+                </div>
+
+
+                <span class="project-status">
+                    ${escapeHTML(project.status)}
+                </span>
+
+            </div>
+
+
+            <div class="admin-project-grid">
+
+                <div>
+                    <span>Website Type</span>
+                    <strong>
+                        ${escapeHTML(project.website_type || "Not specified")}
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Deadline</span>
+                    <strong>
+                        ${escapeHTML(project.deadline || "Not specified")}
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Submitted</span>
+                    <strong>
+                        ${new Date(project.created_at)
+                            .toLocaleDateString()}
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Claimed</span>
+                    <strong>
+                        ${claimed ? "Yes" : "No"}
+                    </strong>
+                </div>
+
+            </div>
+
+
+            <div class="admin-description">
+
+                <strong>Description</strong>
+
+                <p>
+                    ${escapeHTML(project.description || "No description.")}
+                </p>
+
+            </div>
+
+
+            <div class="admin-progress">
+
+                <div class="progress-heading">
+
+                    <strong>Progress</strong>
+
+                    <strong>
+                        ${progress}%
+                    </strong>
+
+                </div>
+
+
+                <input
+                    class="progress-slider"
+                    type="range"
+                    min="0"
+                    max="100"
+                    value="${progress}"
+                    data-action="progress"
+                >
+
+
+                <div class="progress-bar">
+
+                    <div
+                        class="progress-fill"
+                        style="width:${progress}%"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+            <div class="admin-actions">
+
+                <select
+                    class="admin-status"
+                    data-action="status"
+                >
+
+                    ${[
+                        "Request Received",
+                        "Designing",
+                        "Development",
+                        "Customer Review",
+                        "Completed"
+                    ].map(status => `
+
+                        <option
+                            value="${status}"
+                            ${project.status === status ? "selected" : ""}
+                        >
+                            ${status}
+                        </option>
+
+                    `).join("")}
+
+                </select>
+
+
+                <button
+                    class="admin-button"
+                    data-action="claim"
+                >
+                    ${claimed ? "Unclaim" : "Claim"}
+                </button>
+
+
+                ${
+                    project.preview_url
+                    ? `
+                        <a
+                            href="${escapeAttribute(project.preview_url)}"
+                            target="_blank"
+                            class="admin-button"
+                        >
+                            Open Preview
+                        </a>
+                    `
+                    : ""
+                }
+
+            </div>
+
+
+            <div class="admin-response">
+
+                <h3>Customer Response</h3>
+
+                <input
+                    type="text"
+                    class="response-title"
+                    placeholder="Update title"
+                >
+
+                <textarea
+                    class="response-message"
+                    rows="5"
+                    placeholder="Write an update for the customer..."
+                ></textarea>
+
+
+                <button
+                    class="admin-button primary-admin-button"
+                    data-action="send-response"
+                >
+                    Send Update
+                </button>
+
+            </div>
+
+
+            <div class="admin-danger-actions">
+
+                <button
+                    class="admin-button complete-button"
+                    data-action="complete"
+                >
+                    ✓ Mark Completed
+                </button>
+
+
+                <button
+                    class="admin-button delete-button"
+                    data-action="delete"
+                >
+                    Delete Project
+                </button>
+
+            </div>
+
+        </article>
+
+    `;
+}
+
+
+function attachProjectEvents() {
+
+    document
+        .querySelectorAll(".admin-project-card")
+        .forEach(card => {
+
+            const id =
+                card.dataset.id;
+
+
+            card
+                .querySelector('[data-action="status"]')
+                ?.addEventListener("change", event => {
+
+                    updateStatus(
+                        id,
+                        event.target.value
+                    );
+
+                });
+
+
+            card
+                .querySelector('[data-action="progress"]')
+                ?.addEventListener("change", event => {
+
+                    updateProgress(
+                        id,
+                        Number(event.target.value)
+                    );
+
+                });
+
+
+            card
+                .querySelector('[data-action="claim"]')
+                ?.addEventListener("click", () => {
+
+                    claimProject(id);
+
+                });
+
+
+            card
+                .querySelector('[data-action="complete"]')
+                ?.addEventListener("click", () => {
+
+                    completeProject(id);
+
+                });
+
+
+            card
+                .querySelector('[data-action="delete"]')
+                ?.addEventListener("click", () => {
+
+                    deleteProject(id);
+
+                });
+
+
+            card
+                .querySelector('[data-action="send-response"]')
+                ?.addEventListener("click", () => {
+
+                    sendResponse(id, card);
+
+                });
+
+        });
+
+}
+
+
+async function updateStatus(id, status) {
+
+    const { error } =
+        await supabaseClient
+            .from("projects")
+            .update({
+                status
+            })
+            .eq("id", id);
+
+
+    if (error) {
+
+        alert(error.message);
+
+        return;
+    }
+
+
+    await loadProjects();
+}
+
+
+async function updateProgress(id, progress) {
+
+    const { error } =
+        await supabaseClient
+            .from("projects")
+            .update({
+                progress
+            })
+            .eq("id", id);
+
+
+    if (error) {
+
+        alert(error.message);
+
+        return;
+    }
+
+
+    await loadProjects();
+}
+
+
+async function claimProject(id) {
+
+    const {
+        data: sessionData
+    } = await supabaseClient.auth.getSession();
+
+
+    const user =
+        sessionData.session.user;
+
+
+    const project =
+        allProjects.find(p => p.id === id);
+
+
+    const isClaimed =
+        Boolean(project?.claimed_by);
+
+
+    const { error } =
+        await supabaseClient
+            .from("projects")
+            .update(
+                isClaimed
+                ? {
+                    claimed_by: null,
+                    claimed_at: null
+                }
+                : {
+                    claimed_by: user.id,
+                    claimed_at: new Date().toISOString()
+                }
+            )
+            .eq("id", id);
+
+
+    if (error) {
+
+        alert(error.message);
+
+        return;
+    }
+
+
+    await loadProjects();
+}
+
+
+async function completeProject(id) {
+
+    const { error } =
+        await supabaseClient
+            .from("projects")
+            .update({
+                status: "Completed",
+                progress: 100
+            })
+            .eq("id", id);
+
+
+    if (error) {
+
+        alert(error.message);
+
+        return;
+    }
+
+
+    await loadProjects();
+}
+
+
+async function sendResponse(id, card) {
+
+    const title =
+        card.querySelector(".response-title").value.trim();
+
+
+    const message =
+        card.querySelector(".response-message").value.trim();
+
+
+    if (!title || !message) {
+
+        alert("Please enter both a title and message.");
+
+        return;
+    }
+
+
+    const project =
+        allProjects.find(p => p.id === id);
+
+
+    if (!project) {
+
+        alert("Project not found.");
+
+        return;
+    }
+
+
+    const {
+        data: sessionData
+    } = await supabaseClient.auth.getSession();
+
+
+    const user =
+        sessionData.session.user;
+
+
+    const { error: updateError } =
+        await supabaseClient
+            .from("project_updates")
+            .insert({
+
+                project_id: id,
+
+                title,
+
+                message,
+
+                created_by: user.id
+
+            });
+
+
+    if (updateError) {
+
+        alert(updateError.message);
+
+        return;
+    }
+
+
+    const customerEmail =
+        project.profiles?.email ||
+        project.email;
+
+
+    const customerName =
+        project.profiles?.full_name ||
+        project.name ||
+        "Customer";
+
+
+    const {
+        error: emailError
+    } = await supabaseClient.functions.invoke(
+        "send-customer-response",
+        {
+            body: {
+                customerEmail,
+                customerName,
+                websiteName: project.website_name,
+                title,
+                message
+            }
+        }
+    );
+
+
+    if (emailError) {
+
+        alert(
+            "The update was saved, but the email could not be sent.\n\n" +
+            emailError.message
+        );
+
+        await loadProjects();
+
+        return;
+    }
+
+
+    alert("Customer update sent successfully.");
+
+    card.querySelector(".response-title").value = "";
+
+    card.querySelector(".response-message").value = "";
+
+
+    await loadProjects();
+}
+
+
+async function deleteProject(id) {
+
+    const confirmed =
+        confirm(
+            "Are you sure you want to permanently delete this project?"
+        );
+
+
+    if (!confirmed)
+        return;
+
+
+    const { error } =
+        await supabaseClient
+            .from("projects")
+            .delete()
+            .eq("id", id);
+
+
+    if (error) {
+
+        alert(error.message);
+
+        return;
+    }
+
+
+    await loadProjects();
+}
+
+
+function escapeHTML(value) {
+
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+function escapeAttribute(value) {
+
+    return escapeHTML(value);
+}
+
+
+searchInput.addEventListener(
+    "input",
+    renderProjects
+);
+
+
+statusFilter.addEventListener(
+    "change",
+    renderProjects
+);
+
+
+refreshBtn.addEventListener(
+    "click",
+    loadProjects
+);
+
+
+logoutBtn.addEventListener(
+    "click",
+    async () => {
+
+        await supabaseClient.auth.signOut();
+
+        window.location.href = "login.html";
+
+    }
+);
+
+
+loadProjects();
+
+</script>
+
+</body>
+</html>
