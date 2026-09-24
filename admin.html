@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>NovaWeb | Staff Admin</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script src="supabase-config.js"></script>
+
+</head>
+
+
+<body class="admin-page">
+
+
+<nav class="navbar">
+
+    <div class="container navbar-inner">
+
+        <a href="index.html" class="logo">
+            Nova<span>Web</span>
+        </a>
+
+
+        <div class="dashboard-nav">
+
+            <span class="staff-badge">
+                STAFF
+            </span>
+
+            <button
+                id="logoutButton"
+                class="btn btn-secondary"
+            >
+                Logout
+            </button>
+
+        </div>
+
+    </div>
+
+</nav>
+
+
+<main>
+
+    <section class="dashboard-hero">
+
+        <div class="container">
+
+            <p class="eyebrow">
+                STAFF ADMIN PANEL
+            </p>
+
+            <h1>
+                Project Management
+            </h1>
+
+            <p>
+                Manage customer projects, statuses and updates.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <section>
+
+        <div class="container admin-layout">
+
+
+            <aside class="admin-sidebar">
+
+                <div class="admin-sidebar-header">
+
+                    <h3>
+                        Projects
+                    </h3>
+
+                    <button
+                        id="refreshProjects"
+                        class="small-button"
+                    >
+                        Refresh
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="projectList"
+                    class="project-list"
+                >
+                    Loading...
+                </div>
+
+            </aside>
+
+
+            <section class="admin-editor">
+
+                <div
+                    id="noProject"
+                    class="empty-state"
+                >
+
+                    <div class="empty-icon">
+                        ◈
+                    </div>
+
+                    <h2>
+                        Select a project
+                    </h2>
+
+                    <p>
+                        Choose a project from the list to manage it.
+                    </p>
+
+                </div>
+
+
+                <div
+                    id="editor"
+                    style="display:none;"
+                >
+
+                    <div class="editor-header">
+
+                        <div>
+
+                            <p
+                                id="editorCode"
+                                class="project-code"
+                            ></p>
+
+                            <h2 id="editorName"></h2>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="admin-form">
+
+                        <div class="form-group">
+
+                            <label for="statusSelect">
+                                Project Status
+                            </label>
+
+                            <select id="statusSelect">
+
+                                <option>
+                                    Request Received
+                                </option>
+
+                                <option>
+                                    Designing
+                                </option>
+
+                                <option>
+                                    Development
+                                </option>
+
+                                <option>
+                                    Customer Review
+                                </option>
+
+                                <option>
+                                    Completed
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="progressInput">
+                                Progress Percentage
+                            </label>
+
+                            <input
+                                id="progressInput"
+                                type="number"
+                                min="0"
+                                max="100"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="previewInput">
+                                Website Preview URL
+                            </label>
+
+                            <input
+                                id="previewInput"
+                                type="url"
+                                placeholder="https://example.com"
+                            >
+
+                        </div>
+
+
+                        <button
+                            id="saveProject"
+                            class="btn btn-primary"
+                        >
+                            Save Project
+                        </button>
+
+
+                        <hr>
+
+
+                        <h3>
+                            Publish Project Update
+                        </h3>
+
+
+                        <div class="form-group">
+
+                            <label for="updateTitle">
+                                Update Title
+                            </label>
+
+                            <input
+                                id="updateTitle"
+                                type="text"
+                                placeholder="Development update"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="updateMessage">
+                                Update Message
+                            </label>
+
+                            <textarea
+                                id="updateMessage"
+                                placeholder="Write an update for the customer..."
+                            ></textarea>
+
+                        </div>
+
+
+                        <button
+                            id="publishUpdate"
+                            class="btn btn-primary"
+                        >
+                            Publish Update
+                        </button>
+
+
+                        <p
+                            id="adminMessage"
+                            class="form-message"
+                        ></p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<script src="admin.js"></script>
+
+</body>
+</html>
