@@ -1,0 +1,1996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>NovaWeb — Admin</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+
+    <style>
+        /* ================================
+           NOVAWEB STAFF CHAT
+        ================================ */
+
+        .staff-chat {
+            margin-top: 28px;
+            padding: 22px;
+            border-radius: 18px;
+            border: 1px solid rgba(168, 85, 247, 0.45);
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(30, 41, 59, 0.85),
+                    rgba(15, 23, 42, 0.9)
+                );
+            box-shadow:
+                0 0 25px rgba(168, 85, 247, 0.06),
+                inset 0 0 25px rgba(56, 189, 248, 0.02);
+        }
+
+        .staff-chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 16px;
+        }
+
+        .staff-chat-header h3 {
+            margin: 0;
+        }
+
+        .staff-chat-status {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        .staff-chat-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.7);
+        }
+
+        .staff-chat-messages {
+            height: 320px;
+            overflow-y: auto;
+            padding: 15px;
+            border-radius: 14px;
+            background: rgba(2, 6, 23, 0.65);
+            border: 1px solid rgba(148, 163, 184, 0.12);
+        }
+
+        .staff-chat-empty {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #64748b;
+        }
+
+        .staff-chat-message {
+            display: flex;
+            margin-bottom: 14px;
+        }
+
+        .staff-chat-message.staff {
+            justify-content: flex-end;
+        }
+
+        .staff-chat-message.customer {
+            justify-content: flex-start;
+        }
+
+        .staff-chat-bubble {
+            max-width: 75%;
+            padding: 12px 15px;
+            border-radius: 16px;
+        }
+
+        .staff-chat-message.staff .staff-chat-bubble {
+            background: linear-gradient(
+                135deg,
+                #2563eb,
+                #0ea5e9
+            );
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .staff-chat-message.customer .staff-chat-bubble {
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid rgba(168, 85, 247, 0.35);
+            color: #e2e8f0;
+            border-bottom-left-radius: 5px;
+        }
+
+        .staff-chat-sender {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            opacity: 0.85;
+        }
+
+        .staff-chat-text {
+            margin: 0;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .staff-chat-time {
+            display: block;
+            margin-top: 7px;
+            font-size: 10px;
+            opacity: 0.65;
+        }
+
+        .staff-chat-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .staff-chat-input {
+            flex: 1;
+            min-width: 0;
+            padding: 13px 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            background: rgba(15, 23, 42, 0.9);
+            color: white;
+            outline: none;
+            font: inherit;
+        }
+
+        .staff-chat-input:focus {
+            border-color: #a855f7;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.12);
+        }
+
+        .staff-chat-send {
+            padding: 12px 20px;
+            border: 0;
+            border-radius: 12px;
+            background: linear-gradient(
+                135deg,
+                #7c3aed,
+                #2563eb
+            );
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        .staff-chat-send:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 18px rgba(124, 58, 237, 0.25);
+        }
+
+        .staff-chat-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        @media (max-width: 600px) {
+
+            .staff-chat {
+                padding: 16px;
+            }
+
+            .staff-chat-messages {
+                height: 280px;
+            }
+
+            .staff-chat-bubble {
+                max-width: 88%;
+            }
+
+            .staff-chat-form {
+                flex-direction: column;
+            }
+
+            .staff-chat-send {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="navbar">
+
+    <div class="logo">
+        Nova<span>Web</span>
+    </div>
+
+    <nav>
+        <a href="index.html">Website</a>
+        <a href="dashboard.html">Client Portal</a>
+        <button id="logoutBtn" class="nav-button">Logout</button>
+    </nav>
+
+</header>
+
+
+<main class="admin-container">
+
+    <section class="admin-header">
+
+        <div>
+
+            <p class="eyebrow">
+                STAFF PORTAL
+            </p>
+
+            <h1>
+                Project Management
+            </h1>
+
+            <p>
+                Manage customer requests, project progress and updates.
+            </p>
+
+        </div>
+
+
+        <button
+            id="refreshBtn"
+            class="admin-button"
+        >
+            ↻ Refresh
+        </button>
+
+    </section>
+
+
+    <section class="admin-controls">
+
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Search projects..."
+        >
+
+
+        <select id="statusFilter">
+
+            <option value="all">
+                All statuses
+            </option>
+
+            <option value="Request Received">
+                Request Received
+            </option>
+
+            <option value="Designing">
+                Designing
+            </option>
+
+            <option value="Development">
+                Development
+            </option>
+
+            <option value="Customer Review">
+                Customer Review
+            </option>
+
+            <option value="Completed">
+                Completed
+            </option>
+
+        </select>
+
+    </section>
+
+
+    <section
+        id="loadingProjects"
+        class="dashboard-card"
+    >
+
+        <h2>
+            Loading projects...
+        </h2>
+
+        <p>
+            Retrieving customer requests.
+        </p>
+
+    </section>
+
+
+    <section
+        id="projectsList"
+        class="admin-projects"
+    ></section>
+
+</main>
+
+
+<footer class="footer">
+
+    <p>
+        © 2026 NovaWeb. Staff Portal.
+    </p>
+
+</footer>
+
+
+<script>
+
+let allProjects = [];
+
+let currentStaffUser = null;
+
+
+const projectsList =
+    document.getElementById("projectsList");
+
+const loadingProjects =
+    document.getElementById("loadingProjects");
+
+const searchInput =
+    document.getElementById("searchInput");
+
+const statusFilter =
+    document.getElementById("statusFilter");
+
+const refreshBtn =
+    document.getElementById("refreshBtn");
+
+const logoutBtn =
+    document.getElementById("logoutBtn");
+
+
+/* =========================================
+   CHECK STAFF
+========================================= */
+
+async function checkStaff() {
+
+    const {
+        data: sessionData,
+        error: sessionError
+    } = await supabaseClient.auth.getSession();
+
+
+    if (sessionError)
+        throw sessionError;
+
+
+    if (!sessionData.session) {
+
+        window.location.href =
+            "login.html";
+
+        return false;
+    }
+
+
+    const user =
+        sessionData.session.user;
+
+
+    currentStaffUser =
+        user;
+
+
+    const {
+        data: profile,
+        error
+    } = await supabaseClient
+        .from("profiles")
+        .select("role,full_name")
+        .eq("id", user.id)
+        .single();
+
+
+    if (error)
+        throw error;
+
+
+    if (profile.role !== "staff") {
+
+        alert(
+            "You do not have staff access."
+        );
+
+
+        await supabaseClient.auth.signOut();
+
+
+        window.location.href =
+            "login.html";
+
+
+        return false;
+    }
+
+
+    return true;
+}
+
+
+/* =========================================
+   LOAD PROJECTS
+========================================= */
+
+async function loadProjects() {
+
+    try {
+
+        loadingProjects.classList.remove(
+            "hidden"
+        );
+
+
+        projectsList.innerHTML = "";
+
+
+        const allowed =
+            await checkStaff();
+
+
+        if (!allowed)
+            return;
+
+
+        const {
+            data,
+            error
+        } = await supabaseClient
+            .from("projects")
+            .select(`
+                *,
+                profiles:customer_id (
+                    full_name,
+                    email
+                )
+            `)
+            .order("created_at", {
+                ascending: false
+            });
+
+
+        if (error)
+            throw error;
+
+
+        allProjects =
+            data || [];
+
+
+        loadingProjects.classList.add(
+            "hidden"
+        );
+
+
+        renderProjects();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+
+        loadingProjects.innerHTML = `
+
+            <h2>
+                Could not load projects
+            </h2>
+
+            <p>
+                ${escapeHTML(error.message)}
+            </p>
+
+        `;
+    }
+}
+
+
+/* =========================================
+   RENDER PROJECTS
+========================================= */
+
+function renderProjects() {
+
+    const search =
+        searchInput.value
+            .toLowerCase()
+            .trim();
+
+
+    const filter =
+        statusFilter.value;
+
+
+    const projects =
+        allProjects.filter(project => {
+
+            const customerName =
+                project.profiles?.full_name ||
+                "";
+
+
+            const customerEmail =
+                project.profiles?.email ||
+                "";
+
+
+            const matchesSearch =
+                !search ||
+
+                project.project_code
+                    ?.toLowerCase()
+                    .includes(search) ||
+
+                project.website_name
+                    ?.toLowerCase()
+                    .includes(search) ||
+
+                customerName
+                    .toLowerCase()
+                    .includes(search) ||
+
+                customerEmail
+                    .toLowerCase()
+                    .includes(search);
+
+
+            const matchesStatus =
+                filter === "all" ||
+                project.status === filter;
+
+
+            return (
+                matchesSearch &&
+                matchesStatus
+            );
+
+        });
+
+
+    if (!projects.length) {
+
+        projectsList.innerHTML = `
+
+            <div class="dashboard-card">
+
+                <h2>
+                    No projects found
+                </h2>
+
+                <p>
+                    Try changing your search or status filter.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+    projectsList.innerHTML =
+        projects
+            .map(createProjectCard)
+            .join("");
+
+
+    attachProjectEvents();
+
+
+    projects.forEach(project => {
+
+        loadStaffChat(project);
+
+    });
+}
+
+
+/* =========================================
+   PROJECT CARD
+========================================= */
+
+function createProjectCard(project) {
+
+    const customerName =
+        project.profiles?.full_name ||
+        "Unknown customer";
+
+
+    const customerEmail =
+        project.profiles?.email ||
+        project.email ||
+        "No email";
+
+
+    const progress =
+        project.progress || 0;
+
+
+    const claimed =
+        Boolean(project.claimed_by);
+
+
+    return `
+
+        <article
+            class="admin-project-card"
+            data-id="${project.id}"
+        >
+
+
+            <div class="admin-project-header">
+
+                <div>
+
+                    <p class="eyebrow">
+
+                        ${escapeHTML(
+                            project.project_code
+                        )}
+
+                    </p>
+
+
+                    <h2>
+
+                        ${escapeHTML(
+                            project.website_name
+                        )}
+
+                    </h2>
+
+
+                    <p class="customer-info">
+
+                        👤
+                        ${escapeHTML(customerName)}
+
+                        ·
+
+                        ${escapeHTML(customerEmail)}
+
+                    </p>
+
+                </div>
+
+
+                <span class="project-status">
+
+                    ${escapeHTML(
+                        project.status
+                    )}
+
+                </span>
+
+            </div>
+
+
+            <div class="admin-project-grid">
+
+                <div>
+
+                    <span>
+                        Website Type
+                    </span>
+
+                    <strong>
+
+                        ${escapeHTML(
+                            project.website_type ||
+                            "Not specified"
+                        )}
+
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Deadline
+                    </span>
+
+                    <strong>
+
+                        ${escapeHTML(
+                            project.deadline ||
+                            "Not specified"
+                        )}
+
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Submitted
+                    </span>
+
+                    <strong>
+
+                        ${new Date(
+                            project.created_at
+                        ).toLocaleDateString()}
+
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Claimed
+                    </span>
+
+                    <strong>
+
+                        ${
+                            claimed
+                            ? "Yes"
+                            : "No"
+                        }
+
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="admin-description">
+
+                <strong>
+                    Description
+                </strong>
+
+                <p>
+
+                    ${escapeHTML(
+                        project.description ||
+                        "No description."
+                    )}
+
+                </p>
+
+            </div>
+
+
+            <div class="admin-progress">
+
+                <div class="progress-heading">
+
+                    <strong>
+                        Progress
+                    </strong>
+
+                    <strong>
+                        ${progress}%
+                    </strong>
+
+                </div>
+
+
+                <input
+                    class="progress-slider"
+                    type="range"
+                    min="0"
+                    max="100"
+                    value="${progress}"
+                    data-action="progress"
+                >
+
+
+                <div class="progress-bar">
+
+                    <div
+                        class="progress-fill"
+                        style="width:${progress}%"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+            <div class="admin-actions">
+
+                <select
+                    class="admin-status"
+                    data-action="status"
+                >
+
+                    ${[
+                        "Request Received",
+                        "Designing",
+                        "Development",
+                        "Customer Review",
+                        "Completed"
+                    ]
+                        .map(status => `
+
+                            <option
+                                value="${status}"
+                                ${
+                                    project.status === status
+                                    ? "selected"
+                                    : ""
+                                }
+                            >
+                                ${status}
+                            </option>
+
+                        `)
+                        .join("")}
+
+                </select>
+
+
+                <button
+                    class="admin-button"
+                    data-action="claim"
+                >
+
+                    ${
+                        claimed
+                        ? "Unclaim"
+                        : "Claim"
+                    }
+
+                </button>
+
+
+                ${
+                    project.preview_url
+
+                    ? `
+
+                        <a
+                            href="${escapeAttribute(
+                                project.preview_url
+                            )}"
+                            target="_blank"
+                            rel="noopener"
+                            class="admin-button"
+                        >
+                            Open Preview
+                        </a>
+
+                    `
+
+                    : ""
+                }
+
+            </div>
+
+
+            <!-- =================================
+                 STAFF / CUSTOMER CHAT
+            ================================== -->
+
+            <div class="staff-chat">
+
+                <div class="staff-chat-header">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            PROJECT COMMUNICATION
+                        </p>
+
+                        <h3>
+                            💬 Customer Chat
+                        </h3>
+
+                    </div>
+
+
+                    <div class="staff-chat-status">
+
+                        <span class="staff-chat-dot"></span>
+
+                        Live Chat
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="staff-chat-messages"
+                    data-chat-messages
+                >
+
+                    <div class="staff-chat-empty">
+
+                        Loading messages...
+
+                    </div>
+
+                </div>
+
+
+                <form
+                    class="staff-chat-form"
+                    data-chat-form
+                >
+
+                    <input
+                        type="text"
+                        class="staff-chat-input"
+                        maxlength="2000"
+                        placeholder="Reply to the customer..."
+                        autocomplete="off"
+                        required
+                    >
+
+
+                    <button
+                        type="submit"
+                        class="staff-chat-send"
+                    >
+                        Send
+                    </button>
+
+                </form>
+
+            </div>
+
+
+            <!-- =================================
+                 CUSTOMER UPDATE
+            ================================== -->
+
+            <div class="admin-response">
+
+                <h3>
+                    Customer Response
+                </h3>
+
+
+                <input
+                    type="text"
+                    class="response-title"
+                    placeholder="Update title"
+                >
+
+
+                <textarea
+                    class="response-message"
+                    rows="5"
+                    placeholder="Write an update for the customer..."
+                ></textarea>
+
+
+                <button
+                    class="admin-button primary-admin-button"
+                    data-action="send-response"
+                >
+                    Send Update
+                </button>
+
+            </div>
+
+
+            <div class="admin-danger-actions">
+
+                <button
+                    class="admin-button complete-button"
+                    data-action="complete"
+                >
+                    ✓ Mark Completed
+                </button>
+
+
+                <button
+                    class="admin-button delete-button"
+                    data-action="delete"
+                >
+                    Delete Project
+                </button>
+
+            </div>
+
+        </article>
+
+    `;
+}
+
+
+/* =========================================
+   ATTACH EVENTS
+========================================= */
+
+function attachProjectEvents() {
+
+    document
+        .querySelectorAll(".admin-project-card")
+        .forEach(card => {
+
+            const id =
+                card.dataset.id;
+
+
+            card
+                .querySelector(
+                    '[data-action="status"]'
+                )
+                ?.addEventListener(
+                    "change",
+                    event => {
+
+                        updateStatus(
+                            id,
+                            event.target.value
+                        );
+
+                    }
+                );
+
+
+            card
+                .querySelector(
+                    '[data-action="progress"]'
+                )
+                ?.addEventListener(
+                    "change",
+                    event => {
+
+                        updateProgress(
+                            id,
+                            Number(
+                                event.target.value
+                            )
+                        );
+
+                    }
+                );
+
+
+            card
+                .querySelector(
+                    '[data-action="claim"]'
+                )
+                ?.addEventListener(
+                    "click",
+                    () => {
+
+                        claimProject(id);
+
+                    }
+                );
+
+
+            card
+                .querySelector(
+                    '[data-action="complete"]'
+                )
+                ?.addEventListener(
+                    "click",
+                    () => {
+
+                        completeProject(id);
+
+                    }
+                );
+
+
+            card
+                .querySelector(
+                    '[data-action="delete"]'
+                )
+                ?.addEventListener(
+                    "click",
+                    () => {
+
+                        deleteProject(id);
+
+                    }
+                );
+
+
+            card
+                .querySelector(
+                    '[data-action="send-response"]'
+                )
+                ?.addEventListener(
+                    "click",
+                    () => {
+
+                        sendResponse(
+                            id,
+                            card
+                        );
+
+                    }
+                );
+
+
+            const chatForm =
+                card.querySelector(
+                    "[data-chat-form]"
+                );
+
+
+            chatForm?.addEventListener(
+                "submit",
+                event => {
+
+                    event.preventDefault();
+
+                    sendStaffMessage(
+                        id,
+                        card
+                    );
+
+                }
+            );
+
+        });
+}
+
+
+/* =========================================
+   LOAD STAFF CHAT
+========================================= */
+
+async function loadStaffChat(project) {
+
+    const card =
+        document.querySelector(
+            `.admin-project-card[data-id="${project.id}"]`
+        );
+
+
+    if (!card)
+        return;
+
+
+    const container =
+        card.querySelector(
+            "[data-chat-messages]"
+        );
+
+
+    if (!container)
+        return;
+
+
+    const {
+        data: messages,
+        error
+    } = await supabaseClient
+        .from("project_messages")
+        .select(`
+            id,
+            project_id,
+            sender_id,
+            message,
+            created_at,
+            profiles:sender_id (
+                full_name,
+                role
+            )
+        `)
+        .eq("project_id", project.id)
+        .order("created_at", {
+            ascending: true
+        });
+
+
+    if (error) {
+
+        console.error(
+            "Staff chat error:",
+            error
+        );
+
+
+        container.innerHTML = `
+
+            <div class="staff-chat-empty">
+
+                Unable to load chat.
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+    if (!messages || messages.length === 0) {
+
+        container.innerHTML = `
+
+            <div class="staff-chat-empty">
+
+                No messages yet.<br>
+                Start the conversation with the customer.
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+    const wasNearBottom =
+        container.scrollHeight -
+        container.scrollTop -
+        container.clientHeight <
+        100;
+
+
+    container.innerHTML =
+        messages
+            .map(message => {
+
+                const isStaff =
+                    message.sender_id ===
+                    currentStaffUser?.id;
+
+
+                const isCustomer =
+                    message.sender_id ===
+                    project.customer_id;
+
+
+                let senderName =
+                    "NovaWeb Staff";
+
+
+                if (isStaff) {
+
+                    senderName =
+                        "You";
+
+                } else if (isCustomer) {
+
+                    senderName =
+                        message.profiles?.full_name ||
+                        "Customer";
+
+                } else {
+
+                    senderName =
+                        message.profiles?.full_name ||
+                        "NovaWeb Staff";
+
+                }
+
+
+                return `
+
+                    <div
+                        class="staff-chat-message ${
+                            isStaff
+                            ? "staff"
+                            : "customer"
+                        }"
+                    >
+
+                        <div class="staff-chat-bubble">
+
+                            <span class="staff-chat-sender">
+
+                                ${escapeHTML(
+                                    senderName
+                                )}
+
+                            </span>
+
+
+                            <p class="staff-chat-text">
+
+                                ${escapeHTML(
+                                    message.message
+                                )}
+
+                            </p>
+
+
+                            <span class="staff-chat-time">
+
+                                ${new Date(
+                                    message.created_at
+                                ).toLocaleString()}
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                `;
+
+            })
+            .join("");
+
+
+    if (wasNearBottom) {
+
+        container.scrollTop =
+            container.scrollHeight;
+
+    }
+}
+
+
+/* =========================================
+   SEND STAFF MESSAGE
+========================================= */
+
+async function sendStaffMessage(
+    projectId,
+    card
+) {
+
+    const input =
+        card.querySelector(
+            ".staff-chat-input"
+        );
+
+
+    const button =
+        card.querySelector(
+            ".staff-chat-send"
+        );
+
+
+    const message =
+        input.value.trim();
+
+
+    if (!message)
+        return;
+
+
+    button.disabled = true;
+
+    button.textContent =
+        "Sending...";
+
+
+    try {
+
+        const {
+            data: sessionData,
+            error: sessionError
+        } = await supabaseClient.auth.getSession();
+
+
+        if (sessionError)
+            throw sessionError;
+
+
+        const session =
+            sessionData.session;
+
+
+        if (!session) {
+
+            window.location.href =
+                "login.html";
+
+            return;
+        }
+
+
+        const {
+            error
+        } = await supabaseClient
+            .from("project_messages")
+            .insert({
+
+                project_id:
+                    projectId,
+
+                sender_id:
+                    session.user.id,
+
+                message:
+                    message
+
+            });
+
+
+        if (error)
+            throw error;
+
+
+        input.value = "";
+
+
+        const project =
+            allProjects.find(
+                p => p.id === projectId
+            );
+
+
+        /*
+         * Create a customer notification.
+         *
+         * If notifications haven't been
+         * installed yet, the chat still works.
+         */
+
+        if (project) {
+
+            await createCustomerNotification(
+                project.customer_id,
+                project.id,
+                "New message from NovaWeb",
+                "NovaWeb staff sent you a new chat message.",
+                "update"
+            );
+
+        }
+
+
+        await loadStaffChat(project);
+
+
+    } catch (error) {
+
+        console.error(error);
+
+
+        alert(
+            "Could not send message:\n\n" +
+            error.message
+        );
+
+    } finally {
+
+        button.disabled = false;
+
+        button.textContent =
+            "Send";
+    }
+}
+
+
+/* =========================================
+   CUSTOMER NOTIFICATION
+========================================= */
+
+async function createCustomerNotification(
+    customerId,
+    projectId,
+    title,
+    message,
+    type = "info"
+) {
+
+    if (!customerId)
+        return;
+
+
+    const {
+        error
+    } = await supabaseClient
+        .from("customer_notifications")
+        .insert({
+
+            customer_id:
+                customerId,
+
+            project_id:
+                projectId,
+
+            title:
+                title,
+
+            message:
+                message,
+
+            type:
+                type
+
+        });
+
+
+    if (error) {
+
+        console.warn(
+            "Notification could not be created:",
+            error.message
+        );
+
+    }
+}
+
+
+/* =========================================
+   UPDATE STATUS
+========================================= */
+
+async function updateStatus(
+    id,
+    status
+) {
+
+    const project =
+        allProjects.find(
+            p => p.id === id
+        );
+
+
+    const { error } =
+        await supabaseClient
+            .from("projects")
+            .update({
+                status
+            })
+            .eq("id", id);
+
+
+    if (error) {
+
+        alert(error.message);
+
+        return;
+    }
+
+
+    if (project) {
+
+        await createCustomerNotification(
+            project.customer_id,
+            project.id,
+            "Project status updated",
+            `Your project is now at the "${status}" stage.`,
+            "status"
+        );
+
+    }
+
+
+    await loadProjects();
+}
+
+
+/* =========================================
+   UPDATE PROGRESS
+========================================= */
+
+async function updateProgress(
+    id,
+    progress
+) {
+
+    const { error } =
+        await supabaseClient
+            .from("projects")
+            .update({
+                progress
+            })
+            .eq("id", id);
+
+
+    if (error) {
+
+        alert(error.message);
+
+        return;
+    }
+
+
+    await loadProjects();
+}
+
+
+/* =========================================
+   CLAIM PROJECT
+========================================= */
+
+async function claimProject(id) {
+
+    const {
+        data: sessionData
+    } = await supabaseClient
+        .auth
+        .getSession();
+
+
+    const user =
+        sessionData.session.user;
+
+
+    const project =
+        allProjects.find(
+            p => p.id === id
+        );
+
+
+    const isClaimed =
+        Boolean(project?.claimed_by);
+
+
+    const { error } =
+        await supabaseClient
+            .from("projects")
+            .update(
+                isClaimed
+
+                ? {
+                    claimed_by: null,
+                    claimed_at: null
+                }
+
+                : {
+                    claimed_by:
+                        user.id,
+
+                    claimed_at:
+                        new Date().toISOString()
+                }
+            )
+            .eq("id", id);
+
+
+    if (error) {
+
+        alert(error.message);
+
+        return;
+    }
+
+
+    await loadProjects();
+}
+
+
+/* =========================================
+   COMPLETE PROJECT
+========================================= */
+
+async function completeProject(id) {
+
+    const project =
+        allProjects.find(
+            p => p.id === id
+        );
+
+
+    const { error } =
+        await supabaseClient
+            .from("projects")
+            .update({
+
+                status:
+                    "Completed",
+
+                progress:
+                    100
+
+            })
+            .eq("id", id);
+
+
+    if (error) {
+
+        alert(error.message);
+
+        return;
+    }
+
+
+    if (project) {
+
+        await createCustomerNotification(
+            project.customer_id,
+            project.id,
+            "Website completed",
+            "Your NovaWeb website project has been marked as completed.",
+            "completed"
+        );
+
+    }
+
+
+    await loadProjects();
+}
+
+
+/* =========================================
+   SEND CUSTOMER UPDATE
+========================================= */
+
+async function sendResponse(
+    id,
+    card
+) {
+
+    const title =
+        card
+            .querySelector(
+                ".response-title"
+            )
+            .value
+            .trim();
+
+
+    const message =
+        card
+            .querySelector(
+                ".response-message"
+            )
+            .value
+            .trim();
+
+
+    if (!title || !message) {
+
+        alert(
+            "Please enter both a title and message."
+        );
+
+        return;
+    }
+
+
+    const project =
+        allProjects.find(
+            p => p.id === id
+        );
+
+
+    if (!project) {
+
+        alert(
+            "Project not found."
+        );
+
+        return;
+    }
+
+
+    const {
+        data: sessionData
+    } = await supabaseClient.auth.getSession();
+
+
+    const user =
+        sessionData.session.user;
+
+
+    const {
+        error
+    } = await supabaseClient
+        .from("project_updates")
+        .insert({
+
+            project_id:
+                id,
+
+            title:
+                title,
+
+            message:
+                message,
+
+            created_by:
+                user.id
+
+        });
+
+
+    if (error) {
+
+        alert(error.message);
+
+        return;
+    }
+
+
+    /*
+     * Website-only notification.
+     *
+     * No email is sent.
+     */
+
+    await createCustomerNotification(
+        project.customer_id,
+        project.id,
+        title,
+        message,
+        "update"
+    );
+
+
+    alert(
+        "Customer update sent successfully."
+    );
+
+
+    card.querySelector(
+        ".response-title"
+    ).value = "";
+
+
+    card.querySelector(
+        ".response-message"
+    ).value = "";
+
+
+    await loadProjects();
+}
+
+
+/* =========================================
+   DELETE PROJECT
+========================================= */
+
+async function deleteProject(id) {
+
+    const confirmed =
+        confirm(
+            "Are you sure you want to permanently delete this project?"
+        );
+
+
+    if (!confirmed)
+        return;
+
+
+    const { error } =
+        await supabaseClient
+            .from("projects")
+            .delete()
+            .eq("id", id);
+
+
+    if (error) {
+
+        alert(error.message);
+
+        return;
+    }
+
+
+    await loadProjects();
+}
+
+
+/* =========================================
+   SECURITY HELPERS
+========================================= */
+
+function escapeHTML(value) {
+
+    return String(value ?? "")
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+}
+
+
+function escapeAttribute(value) {
+
+    return escapeHTML(value);
+}
+
+
+/* =========================================
+   SEARCH / FILTER
+========================================= */
+
+searchInput.addEventListener(
+    "input",
+    renderProjects
+);
+
+
+statusFilter.addEventListener(
+    "change",
+    renderProjects
+);
+
+
+refreshBtn.addEventListener(
+    "click",
+    loadProjects
+);
+
+
+/* =========================================
+   LOGOUT
+========================================= */
+
+logoutBtn.addEventListener(
+    "click",
+    async () => {
+
+        await supabaseClient
+            .auth
+            .signOut();
+
+
+        window.location.href =
+            "login.html";
+
+    }
+);
+
+
+/* =========================================
+   AUTO REFRESH CHAT
+========================================= */
+
+setInterval(
+    async () => {
+
+        if (!currentStaffUser)
+            return;
+
+
+        for (const project of allProjects) {
+
+            await loadStaffChat(
+                project
+            );
+
+        }
+
+    },
+    5000
+);
+
+
+/* =========================================
+   START
+========================================= */
+
+loadProjects();
+
+</script>
+
+</body>
+</html>
