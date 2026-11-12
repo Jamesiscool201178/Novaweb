@@ -1,0 +1,639 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NovaWeb | Staff Hub</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --bg: #090d19;
+    --panel: #11182b;
+    --panel2: #17213a;
+    --text: #f4f6ff;
+    --muted: #9aa8c5;
+    --blue: #6585ff;
+    --purple: #9b72ff;
+    --border: rgba(255,255,255,.09);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter, sans-serif;
+}
+
+button, input, select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+    border: 0;
+}
+
+.sidebar {
+    width: 245px;
+    position: fixed;
+    inset: 0 auto 0 0;
+    background: #0d1425;
+    border-right: 1px solid var(--border);
+    padding: 27px 18px;
+}
+
+.logo {
+    font-size: 25px;
+    font-weight: 800;
+    margin-bottom: 40px;
+}
+
+.logo span {
+    color: var(--blue);
+}
+
+.sidebar-label {
+    color: #7383a5;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    margin: 25px 10px 12px;
+}
+
+.nav-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    color: #aab6d1;
+    background: transparent;
+    padding: 13px;
+    border-radius: 10px;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.nav-item.active, .nav-item:hover {
+    background: rgba(101,133,255,.15);
+    color: white;
+}
+
+.sidebar-bottom {
+    position: absolute;
+    bottom: 22px;
+    left: 18px;
+    right: 18px;
+}
+
+.main {
+    margin-left: 245px;
+    padding: 35px;
+}
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+h1 {
+    margin: 0;
+    font-size: 27px;
+}
+
+.subtitle {
+    color: var(--muted);
+    margin-top: 8px;
+    font-size: 13px;
+}
+
+.staff-tag {
+    background: rgba(101,133,255,.15);
+    color: #a8baff;
+    padding: 10px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 17px;
+    margin-bottom: 27px;
+}
+
+.stat {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    padding: 22px;
+}
+
+.stat-label {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.stat-number {
+    font-size: 29px;
+    font-weight: 800;
+    margin-top: 13px;
+}
+
+.section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 17px;
+    padding: 23px;
+    margin-bottom: 22px;
+}
+
+.section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.section-heading h2 {
+    font-size: 17px;
+    margin: 0;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+input, select {
+    background: #0b1222;
+    color: white;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 11px 13px;
+    outline: none;
+}
+
+input:focus, select:focus {
+    border-color: var(--blue);
+}
+
+.search {
+    min-width: 210px;
+}
+
+.project {
+    background: #151e33;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    padding: 19px;
+    margin-bottom: 12px;
+}
+
+.project-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.project h3 {
+    margin: 0 0 7px;
+    font-size: 16px;
+}
+
+.project-code {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.project-info {
+    color: #aab6d1;
+    font-size: 12px;
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.status {
+    display: inline-block;
+    border-radius: 20px;
+    padding: 6px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    background: rgba(101,133,255,.15);
+    color: #a8baff;
+}
+
+.progress {
+    height: 6px;
+    border-radius: 10px;
+    background: #27324b;
+    margin: 17px 0;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue), var(--purple));
+    border-radius: 10px;
+}
+
+.project-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-top: 14px;
+}
+
+.btn {
+    padding: 10px 13px;
+    border-radius: 8px;
+    background: var(--panel2);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.btn.primary {
+    background: var(--blue);
+}
+
+.btn.success {
+    background: #16875d;
+}
+
+.btn.danger {
+    background: #a63d53;
+}
+
+.btn:hover {
+    filter: brightness(1.15);
+}
+
+.project-actions select {
+    font-size: 11px;
+    padding: 9px;
+}
+
+.empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 35px 10px;
+    font-size: 13px;
+}
+
+#message {
+    display: none;
+    padding: 13px;
+    border-radius: 10px;
+    margin-bottom: 18px;
+    background: rgba(101,133,255,.15);
+    color: #c1ceff;
+    font-size: 13px;
+}
+
+.loading {
+    color: var(--muted);
+    padding: 30px;
+    text-align: center;
+}
+
+@media(max-width: 900px) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        padding: 17px;
+    }
+
+    .logo { margin-bottom: 15px; }
+    .sidebar-label, .sidebar-bottom { display: none; }
+
+    .nav-item {
+        display: inline-block;
+        width: auto;
+        margin: 0 4px 0 0;
+    }
+
+    .main {
+        margin-left: 0;
+        padding: 20px;
+    }
+
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media(max-width: 480px) {
+    .stats { grid-template-columns: 1fr 1fr; }
+    .topbar { align-items: flex-start; flex-direction: column; }
+    .section { padding: 16px; }
+}
+</style>
+</head>
+
+<body>
+
+<aside class="sidebar">
+    <div class="logo">Nova<span>Web</span></div>
+
+    <div class="sidebar-label">WORKSPACE</div>
+    <button class="nav-item active">▦ Dashboard</button>
+    <button class="nav-item" onclick="document.getElementById('projects').scrollIntoView({behavior:'smooth'})">▤ Projects</button>
+
+    <div class="sidebar-label">ACCOUNT</div>
+    <button class="nav-item" onclick="location.href='dashboard.html'">← Client Dashboard</button>
+
+    <div class="sidebar-bottom">
+        <button class="nav-item" onclick="logout()">↪ Sign out</button>
+    </div>
+</aside>
+
+<main class="main">
+    <div class="topbar">
+        <div>
+            <h1>Staff Hub</h1>
+            <div class="subtitle">Manage projects and keep NovaWeb moving.</div>
+        </div>
+        <div class="staff-tag" id="staffName">STAFF MEMBER</div>
+    </div>
+
+    <div id="message"></div>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-label">Total Projects</div>
+            <div class="stat-number" id="totalProjects">0</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">Awaiting Staff</div>
+            <div class="stat-number" id="pendingProjects">0</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">In Progress</div>
+            <div class="stat-number" id="activeProjects">0</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">Completed</div>
+            <div class="stat-number" id="completedProjects">0</div>
+        </div>
+    </div>
+
+    <section class="section" id="projects">
+        <div class="section-heading">
+            <h2>Project Management</h2>
+            <div class="controls">
+                <input class="search" id="search" placeholder="Search projects..." oninput="renderProjects()">
+                <select id="filter" onchange="renderProjects()">
+                    <option value="all">All projects</option>
+                    <option value="Request Received">Awaiting staff</option>
+                    <option value="Designing">Designing</option>
+                    <option value="Development">Development</option>
+                    <option value="Customer Review">Customer review</option>
+                    <option value="Completed">Completed</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="projectList" class="loading">Loading projects...</div>
+    </section>
+</main>
+
+<script>
+const SUPABASE_URL = "https://ogjzdsoyndxtbtnxiypc2.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_xwPHXgqxGRbqGcTUjrIMMA_jAdVhXBg";
+
+const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+);
+
+let currentUser = null;
+let projects = [];
+
+const statuses = [
+    "Request Received",
+    "Designing",
+    "Development",
+    "Customer Review",
+    "Completed"
+];
+
+function showMessage(message) {
+    const box = document.getElementById("message");
+    box.textContent = message;
+    box.style.display = "block";
+    setTimeout(() => box.style.display = "none", 4000);
+}
+
+async function start() {
+    const { data: authData, error: authError } = await db.auth.getUser();
+
+    if (authError || !authData.user) {
+        location.href = "login.html";
+        return;
+    }
+
+    currentUser = authData.user;
+
+    const { data: profile, error: profileError } = await db
+        .from("profiles")
+        .select("role")
+        .eq("id", currentUser.id)
+        .single();
+
+    if (profileError || !profile || !["staff", "admin"].includes(profile.role)) {
+        document.querySelector(".main").innerHTML =
+            "<h1>Access denied</h1><p>Your account does not have staff permissions.</p>";
+        return;
+    }
+
+    document.getElementById("staffName").textContent =
+        profile.role.toUpperCase();
+
+    await loadProjects();
+}
+
+async function loadProjects() {
+    const { data, error } = await db
+        .from("projects")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        document.getElementById("projectList").textContent =
+            "Could not load projects: " + error.message;
+        return;
+    }
+
+    projects = data || [];
+    updateStats();
+    renderProjects();
+}
+
+function updateStats() {
+    document.getElementById("totalProjects").textContent = projects.length;
+
+    document.getElementById("pendingProjects").textContent =
+        projects.filter(p => p.status === "Request Received" && !p.claimed_by).length;
+
+    document.getElementById("activeProjects").textContent =
+        projects.filter(p => p.status && p.status !== "Request Received" && p.status !== "Completed").length;
+
+    document.getElementById("completedProjects").textContent =
+        projects.filter(p => p.status === "Completed").length;
+}
+
+function renderProjects() {
+    const list = document.getElementById("projectList");
+    const search = document.getElementById("search").value.toLowerCase();
+    const filter = document.getElementById("filter").value;
+
+    const filtered = projects.filter(p => {
+        const matchesSearch =
+            (p.website_name || "").toLowerCase().includes(search) ||
+            (p.project_code || "").toLowerCase().includes(search) ||
+            (p.website_type || "").toLowerCase().includes(search);
+
+        const matchesFilter = filter === "all" || p.status === filter;
+
+        return matchesSearch && matchesFilter;
+    });
+
+    if (!filtered.length) {
+        list.innerHTML = '<div class="empty">No projects found.</div>';
+        return;
+    }
+
+    list.innerHTML = filtered.map(p => {
+        const progress = Math.max(0, (statuses.indexOf(p.status) + 1) * 20);
+        const claimed = p.claimed_by === currentUser.id;
+
+        return `
+        <article class="project">
+            <div class="project-top">
+                <div>
+                    <h3>${escapeHTML(p.website_name || "Untitled project")}</h3>
+                    <div class="project-code">Project ${escapeHTML(p.project_code || "No code")}</div>
+                </div>
+                <span class="status">${escapeHTML(p.status || "Request Received")}</span>
+            </div>
+
+            <div class="project-info">
+                <span>Type: ${escapeHTML(p.website_type || "Not specified")}</span>
+                <span>Deadline: ${escapeHTML(p.deadline || "Not set")}</span>
+                <span>Assigned: ${claimed ? "You" : p.claimed_by ? "Another staff member" : "Unclaimed"}</span>
+            </div>
+
+            <div class="progress">
+                <div class="progress-bar" style="width:${progress}%"></div>
+            </div>
+
+            <div class="project-actions">
+                ${
+                    !p.claimed_by
+                    ? `<button class="btn primary" onclick="claimProject('${p.id}')">Claim Project</button>`
+                    : claimed
+                    ? `<button class="btn" onclick="unclaimProject('${p.id}')">Unclaim</button>`
+                    : ""
+                }
+
+                <select onchange="changeStatus('${p.id}', this.value)" ${!claimed ? "disabled" : ""}>
+                    ${statuses.map(s =>
+                        `<option value="${s}" ${p.status === s ? "selected" : ""}>${s}</option>`
+                    ).join("")}
+                </select>
+
+                <button class="btn success" onclick="completeProject('${p.id}')" ${!claimed ? "disabled" : ""}>Complete</button>
+
+                ${p.preview_url ? `<a class="btn" href="${escapeHTML(p.preview_url)}" target="_blank" rel="noopener">Preview</a>` : ""}
+            </div>
+        </article>`;
+    }).join("");
+}
+
+function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+}
+
+async function claimProject(id) {
+    const { error } = await db
+        .from("projects")
+        .update({ claimed_by: currentUser.id })
+        .eq("id", id)
+        .is("claimed_by", null);
+
+    if (error) {
+        showMessage(error.message);
+        return;
+    }
+
+    showMessage("Project claimed.");
+    await loadProjects();
+}
+
+async function unclaimProject(id) {
+    const { error } = await db
+        .from("projects")
+        .update({ claimed_by: null })
+        .eq("id", id)
+        .eq("claimed_by", currentUser.id);
+
+    if (error) {
+        showMessage(error.message);
+        return;
+    }
+
+    showMessage("Project unclaimed.");
+    await loadProjects();
+}
+
+async function changeStatus(id, status) {
+    const { error } = await db
+        .from("projects")
+        .update({ status })
+        .eq("id", id)
+        .eq("claimed_by", currentUser.id);
+
+    if (error) {
+        showMessage(error.message);
+        return;
+    }
+
+    showMessage("Project status updated.");
+    await loadProjects();
+}
+
+async function completeProject(id) {
+    if (!confirm("Mark this project as completed?")) return;
+
+    await changeStatus(id, "Completed");
+}
+
+async function logout() {
+    await db.auth.signOut();
+    location.href = "login.html";
+}
+
+start();
+</script>
+</body>
+</html>

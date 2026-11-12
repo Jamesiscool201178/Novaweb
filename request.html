@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b18">
+  <title>Start a project — NovaWeb</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="request-page">
+
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <header class="site-header">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">N</span>
+      <span>nova<span class="brand-light">web</span></span>
+    </a>
+
+    <nav class="nav-links">
+      <a href="index.html#services">Services</a>
+      <a href="index.html#process">Process</a>
+      <a class="nav-login" href="login.html">Client portal ↗</a>
+    </nav>
+
+    <a class="button button-small button-ghost" href="index.html">← Back home</a>
+  </header>
+
+  <main class="section-wrap request-layout">
+
+    <div class="request-intro">
+      <div class="eyebrow">
+        <span class="live-dot"></span>
+        YOUR PROJECT STARTS HERE
+      </div>
+
+      <h1>Let's build<br>something <span class="gradient-text">great.</span></h1>
+
+      <p>
+        Tell us a little about what you have in mind. The more detail you share, the easier it is to understand your vision.
+      </p>
+
+      <div class="request-note">
+        <span>✦</span>
+        <div>
+          <b>Every great website starts with an idea.</b>
+          <small>Don't worry if you haven't figured out every detail yet.</small>
+        </div>
+      </div>
+
+      <div class="request-backdrop">N<span>W</span></div>
+    </div>
+
+    <form class="request-form" id="projectForm">
+
+      <div class="form-heading">
+        <div>
+          <div class="eyebrow">PROJECT REQUEST</div>
+          <h2>Tell us about it</h2>
+        </div>
+        <span class="required-note">* Required</span>
+      </div>
+
+      <div class="form-grid">
+
+        <label class="field">
+          Your name *
+          <input name="name" required maxlength="80" placeholder="Your name">
+        </label>
+
+        <label class="field">
+          Email address *
+          <input name="email" type="email" required maxlength="160" placeholder="you@example.com">
+        </label>
+
+        <label class="field">
+          Discord username
+          <input name="discord" maxlength="80" placeholder="username (optional)">
+        </label>
+
+        <label class="field">
+          Website name *
+          <input name="website_name" required maxlength="100" placeholder="What should it be called?">
+        </label>
+
+        <label class="field">
+          Website type *
+          <select name="website_type" required>
+            <option value="">Choose a type</option>
+            <option>Business website</option>
+            <option>Portfolio</option>
+            <option>Community / gaming</option>
+            <option>Store / ecommerce</option>
+            <option>Dashboard / web app</option>
+            <option>Other / not sure</option>
+          </select>
+        </label>
+
+        <label class="field">
+          Budget
+          <select name="budget">
+            <option value="Free">Free / discuss</option>
+            <option>Under £25</option>
+            <option>£25–£50</option>
+            <option>£50–£100</option>
+            <option>£100+</option>
+            <option>Flexible</option>
+          </select>
+        </label>
+
+        <label class="field field-full">
+          What do you need? *
+          <textarea name="description" required minlength="20" maxlength="3000" rows="5" placeholder="Describe your idea, pages, features, colours or anything else we should know..."></textarea>
+          <small>At least 20 characters.</small>
+        </label>
+
+        <label class="field field-full">
+          Do you have a target deadline?
+          <input name="deadline" type="date">
+        </label>
+
+        <div class="field field-full">
+          <span class="field-label">
+            Reference images
+            <span class="optional">Optional · up to 4 images</span>
+          </span>
+
+          <label class="upload-box" for="references">
+            <span class="upload-symbol">＋</span>
+            <b>Choose images to share</b>
+            <small>PNG, JPG or WEBP · Max 5 MB each</small>
+            <input id="references" name="references" type="file" accept="image/png,image/jpeg,image/webp" multiple>
+          </label>
+
+          <div id="fileList" class="file-list"></div>
+        </div>
+
+      </div>
+
+      <label class="consent">
+        <input type="checkbox" required>
+        <span>I confirm the details above are correct and agree to be contacted about this project.</span>
+      </label>
+
+      <button class="button button-primary submit-button" type="submit">
+        Send project request <span>↗</span>
+      </button>
+
+      <p class="form-message" id="formMessage" role="status">
+        Your request is not sent until the project form is connected to your database.
+      </p>
+
+    </form>
+  </main>
+
+  <footer class="site-footer">
+    <div class="section-wrap footer-bottom">
+      <span>© 2026 NovaWeb. All rights reserved.</span>
+      <a href="index.html">Back to NovaWeb ↗</a>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
